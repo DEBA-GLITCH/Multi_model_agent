@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Critique",
+  "type": "object",
+  "required": [
+    "decision",
+    "reasons",
+    "severity",
+    "required_changes",
+    "confidence_score"
+  ],
+  "properties": {
+    "decision": {
+      "type": "string",
+      "enum": ["APPROVE", "REJECT"]
+    },
+    "reasons": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Why the plan or execution failed"
+      }
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["minor", "major", "fatal"]
+    },
+    "required_changes": {
+      "type": "array",
+      "description": "What the planner must fix next",
+      "items": {
+        "type": "string"
+      }
+    },
+    "confidence_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    }
+  },
+  "additionalProperties": false
+}
