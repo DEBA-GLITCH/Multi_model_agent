@@ -15,7 +15,7 @@ def load_schema(path: str) -> dict:
 
 
 def main():
-    print("Multi-Agent System (Phase 3)")
+    print("Multi-Agent System (Phase 4)")
     print("Type 'exit' or 'quit' to stop.\n")
 
 
@@ -43,17 +43,16 @@ def main():
             break
 
         approved = False
+        feedback = None
 
         for iteration in range(1, MAX_ITERATIONS + 1):
             print(f"\n--- Iteration {iteration} ---")
 
 
-
-
             # 1. Planner creates plan
 
 
-            plan = planner.create_plan(user_input)
+            plan = planner.create_plan(user_input, feedback)
 
 
 
@@ -68,29 +67,18 @@ def main():
                 print("Error:", e.message)
                 break  # fatal — no executor run
 
-
-
-
             # 3. Executor executes plan
-
 
             execution_result = executor.execute(plan)
             print("Execution Result:", execution_result)
-
-
-
-
+            
             # 4. Critic reviews
-
-
 
             critique = critic.review(plan, execution_result)
 
-
-
-
-
             # 5. Validate critique schema
+
+
             try:
                 validate(instance=critique, schema=critique_schema)
             except ValidationError as e:
@@ -99,12 +87,7 @@ def main():
                 break  # fatal — system error
 
 
-
-
-
-
             # 6. Decision enforcement
-
 
             decision = critique["decision"]
             print("Critic Decision:", decision)
@@ -119,9 +102,15 @@ def main():
                 print("Reasons:", critique["reasons"])
                 print("Required Changes:", critique["required_changes"])
 
+                # ✅ UPDATE feedback here
+                feedback = critique["required_changes"]
+
+
         if not approved:
             print("\n⚠️ Max iterations reached or fatal error occurred.")
             print("No approved output produced.")
+        
+
 
         print("\n" + "=" * 50 + "\n")
 
