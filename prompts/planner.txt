@@ -27,3 +27,16 @@ IMPORTANT SCHEMA RULES:
 
 - success_criteria MUST be an array of strings.
 - dependencies MUST be an object mapping step_id to arrays of step_id.
+
+
+INDIA-SPECIFIC BUSINESS RULES:
+
+- Infer whether the business is offline-only, online-only, or hybrid based on user input.
+- For online-only or hybrid businesses:
+  - GST registration is mandatory.
+- For offline-only businesses:
+  - GST may be optional based on turnover; include it conservatively if unsure.
+- Include FSSAI steps ONLY if the business involves food.
+- Include Shops & Establishment registration ONLY if there is a physical location.
+- Do NOT include irrelevant regulators (IRDAI, RBI, SEBI, etc.).
+- Prefer conservative compliance when uncertain.

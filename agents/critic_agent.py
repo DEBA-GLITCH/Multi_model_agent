@@ -5,47 +5,42 @@ class CriticAgent:
             step.get("action", "").lower() for step in steps
         )
 
-        # Define compliance areas with semantic keywords
-        compliance_areas = {
-            "registration": ["register", "incorporat", "company", "business"],
-            "tax": ["gst", "tax", "pan"],
-            "food": ["fssai", "food"],
-            "banking": ["bank", "account"]
-        }
+        # Detect business characteristics
+        is_food = any(word in actions_text for word in ["food", "restaurant", "grocery", "delivery"])
+        is_online = any(word in actions_text for word in ["online", "ecommerce", "delivery", "platform"])
+        has_physical = any(word in actions_text for word in ["shop", "store", "establishment"])
 
-        found = {}
-        missing = []
+        # Mandatory checks
+        issues = []
 
-        for area, keywords in compliance_areas.items():
-            if any(keyword in actions_text for keyword in keywords):
-                found[area] = True
-            else:
-                found[area] = False
-                missing.append(area)
+        # GST logic
+        if is_online and "gst" not in actions_text:
+            issues.append("GST registration is mandatory for online or hybrid businesses")
 
-        score = sum(found.values())
-        max_score = len(compliance_areas)
-        confidence_score = round(score / max_score, 2)
+        # FSSAI logic
+        if is_food and "fssai" not in actions_text:
+            issues.append("FSSAI registration/license required for food-related businesses")
 
-        # Approval threshold
-        if confidence_score >= 0.75:
+        if not is_food and "fssai" in actions_text:
+            issues.append("FSSAI included for a non-food business")
+
+        # Shops & Establishment logic
+        if has_physical and "shop" not in actions_text:
+            issues.append("Shops & Establishment registration required for physical businesses")
+
+        if issues:
             return {
-                "decision": "APPROVE",
-                "reasons": [],
-                "severity": "minor",
-                "required_changes": [],
-                "confidence_score": confidence_score
+                "decision": "REJECT",
+                "reasons": issues,
+                "severity": "major",
+                "required_changes": issues,
+                "confidence_score": 0.4
             }
 
-        # Otherwise reject with precise guidance
         return {
-            "decision": "REJECT",
-            "reasons": [
-                f"Missing or weak compliance areas: {missing}"
-            ],
-            "severity": "major",
-            "required_changes": [
-                f"Add steps addressing: {', '.join(missing)}"
-            ],
-            "confidence_score": confidence_score
+            "decision": "APPROVE",
+            "reasons": [],
+            "severity": "minor",
+            "required_changes": [],
+            "confidence_score": 0.9
         }

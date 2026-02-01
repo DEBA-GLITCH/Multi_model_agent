@@ -14,6 +14,17 @@ def load_schema(path: str) -> dict:
         return json.load(f)
 
 
+def format_plan_for_user(plan: dict) -> str:
+    lines = []
+    lines.append("Here’s a clear step-by-step plan for you:\n")
+
+    for idx, step in enumerate(plan.get("steps", []), start=1):
+        action = step.get("action", "").strip()
+        lines.append(f"Step {idx}: {action}")
+
+    return "\n".join(lines)
+
+
 def main():
     print("Multi-Agent System (Phase 4)")
     print("Type 'exit' or 'quit' to stop.\n")
@@ -94,13 +105,15 @@ def main():
 
             if decision == "APPROVE":
                 print("\n✅ Final Approved Plan:")
-                print(json.dumps(plan, indent=2))
+                formatted_plan = format_plan_for_user(plan)
+                print(formatted_plan)
+                #print(json.dumps(plan, indent=2))             >>internal debugging only<<
                 approved = True
                 break
             else:
                 print("❌ Rejected by Critic, revising plan...")
                 #print("Reasons:", critique["reasons"])
-                #print("Required Changes:", critique["required_changes"])
+                #print("Required Changes:", critique["required_changes"])    >>internal debugging only<<
 
                 # ✅ UPDATE feedback here
                 feedback = critique["required_changes"]
