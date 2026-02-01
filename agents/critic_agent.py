@@ -1,24 +1,38 @@
 class CriticAgent:
     def review(self, plan: dict, execution_result: dict) -> dict:
-        # Simple rule: check if success_criteria is met
-        # Our scaffold expects result == 5
+        required_actions = [
+            "register",
+            "gst",
+            "fssai",
+            "bank"
+        ]
 
-        expected = 5
-        actual = list(execution_result.values())[0]
+        actions_text = " ".join(
+            step["action"].lower() for step in plan.get("steps", [])
+        )
 
-        if actual == expected:
+        missing = [
+            keyword for keyword in required_actions
+            if keyword not in actions_text
+        ]
+
+        if missing:
             return {
-                "decision": "APPROVE",
-                "reasons": [],
-                "severity": "minor",
-                "required_changes": [],
-                "confidence_score": 1.0
+                "decision": "REJECT",
+                "reasons": [
+                    f"Missing mandatory compliance areas: {missing}"
+                ],
+                "severity": "major",
+                "required_changes": [
+                    f"Include steps covering: {', '.join(missing)}"
+                ],
+                "confidence_score": 0.2
             }
 
         return {
-            "decision": "REJECT",
-            "reasons": ["Execution result does not meet success criteria"],
-            "severity": "major",
-            "required_changes": ["Fix calculation logic or inputs"],
-            "confidence_score": 0.2
+            "decision": "APPROVE",
+            "reasons": [],
+            "severity": "minor",
+            "required_changes": [],
+            "confidence_score": 0.9
         }

@@ -12,7 +12,7 @@
   "properties": {
     "goal": {
       "type": "string",
-      "description": "Clear, testable objective of the plan"
+      "description": "High-level objective of the plan"
     },
     "steps": {
       "type": "array",
@@ -31,15 +31,15 @@
           },
           "action": {
             "type": "string",
-            "description": "Tool name or abstract operation"
+            "description": "Legal or administrative action to be performed"
           },
           "inputs": {
             "type": "object",
-            "description": "Parameters required for this step"
+            "description": "Parameters required for this step (jurisdiction, entity type, etc.)"
           },
           "expected_output": {
             "type": "string",
-            "description": "What success looks like for this step"
+            "description": "Document, certificate, or approval produced by this step"
           }
         },
         "additionalProperties": false
@@ -47,7 +47,7 @@
     },
     "dependencies": {
       "type": "object",
-      "description": "Step dependency graph (DAG)",
+      "description": "Step dependency graph where each key depends on listed step_ids",
       "additionalProperties": {
         "type": "array",
         "items": { "type": "string" }
@@ -58,12 +58,12 @@
       "minItems": 1,
       "items": {
         "type": "string",
-        "description": "Objective checks the critic can verify"
+        "description": "Objective conditions the critic can verify"
       }
     },
     "constraints": {
       "type": "object",
-      "description": "Hard limits that must not be violated"
+      "description": "Operational or legal constraints such as geography, budget, or scope"
     }
   },
   "additionalProperties": false

@@ -70,7 +70,7 @@ def main():
             # 3. Executor executes plan
 
             execution_result = executor.execute(plan)
-            print("Execution Result:", execution_result)
+            #print("Execution Result:", execution_result)   >>internal debugging only<<
             
             # 4. Critic reviews
 
@@ -93,14 +93,14 @@ def main():
             print("Critic Decision:", decision)
 
             if decision == "APPROVE":
-                print("\n✅ Final Approved Output:")
-                print(execution_result)
+                print("\n✅ Final Approved Plan:")
+                print(json.dumps(plan, indent=2))
                 approved = True
                 break
             else:
-                print("❌ Rejected by Critic.")
-                print("Reasons:", critique["reasons"])
-                print("Required Changes:", critique["required_changes"])
+                print("❌ Rejected by Critic, revising plan...")
+                #print("Reasons:", critique["reasons"])
+                #print("Required Changes:", critique["required_changes"])
 
                 # ✅ UPDATE feedback here
                 feedback = critique["required_changes"]
@@ -116,4 +116,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main()    

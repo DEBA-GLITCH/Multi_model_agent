@@ -1,24 +1,55 @@
+import json
+import os
+from groq import Groq
+
+from config.settings import GROQ_MODEL
+
+
 class PlannerAgent:
+    def __init__(self):
+        self.client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+
+    def _load_prompt(self) -> str:
+        with open("prompts/planner.txt", "r") as f:
+            return f.read()
+
     def create_plan(self, user_input: str, feedback: list | None = None) -> dict:
-        # Default values
-        a, b = 2, 5  # intentionally wrong first
+        system_prompt = self._load_prompt()
 
-        # If critic gave feedback, revise the plan
+        user_prompt = f"""
+Startup idea:
+{user_input}
+"""
+
         if feedback:
-            if "Fix calculation logic or inputs" in feedback:
-                a, b = 2, 3  # corrected values
+            user_prompt += f"""
+The previous plan was rejected for these reasons:
+{feedback}
 
-        return {
-            "goal": "Add two numbers",
-            "steps": [
-                {
-                    "step_id": "step_1",
-                    "action": "calculator.add",
-                    "inputs": {"a": a, "b": b},
-                    "expected_output": "Sum of a and b"
-                }
+Revise the plan to address the issues.
+"""
+
+        response = self.client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
-            "dependencies": {},
-            "success_criteria": ["Result equals 5"],
-            "constraints": {}
-        }
+            temperature=0.2
+        )
+
+        raw_output = response.choices[0].message.content.strip()
+        # Defensive cleanup for markdown-wrapped JSON
+        
+        if raw_output.startswith("```"):
+            raw_output = raw_output.strip("`")
+            raw_output = raw_output.replace("json", "", 1).strip()
+
+        try:
+            plan = json.loads(raw_output)
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                f"Planner produced invalid JSON. Raw output:\n{raw_output}"
+            ) from e
+
+        return plan
