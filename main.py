@@ -5,6 +5,9 @@ from jsonschema import validate, ValidationError
 from agents.planner_agent import PlannerAgent
 from agents.executor_agent import ExecutorAgent
 from agents.critic_agent import CriticAgent
+from memory import audit_log
+from memory.audit_log import AuditLog
+
 
 from config.settings import MAX_ITERATIONS
 
@@ -48,6 +51,8 @@ def main():
 
     while True:
         user_input = input("User > ").strip()
+        audit_log = AuditLog()
+
 
         if user_input.lower() in {"exit", "quit"}:
             print("Exiting system.")
@@ -101,15 +106,29 @@ def main():
             # 6. Decision enforcement
 
             decision = critique["decision"]
+
+            audit_log.log_iteration(
+            user_input=user_input,
+            iteration=iteration,
+            decision=decision,
+            confidence_score=critique.get("confidence_score", 0.0),
+            reasons=critique.get("reasons", []),)
+           
             print("Critic Decision:", decision)
 
             if decision == "APPROVE":
                 print("\n✅ Final Approved Plan:")
+                audit_log.log_final_plan(plan)
                 formatted_plan = format_plan_for_user(plan)
                 print(formatted_plan)
+                print("\n📊 Decision Summary:")
+                print(audit_log.summary())
                 #print(json.dumps(plan, indent=2))             >>internal debugging only<<
                 approved = True
                 break
+
+
+        
             else:
                 print("❌ Rejected by Critic, revising plan...")
                 #print("Reasons:", critique["reasons"])
@@ -125,7 +144,7 @@ def main():
         
 
 
-        print("\n" + "=" * 50 + "\n")
+        #print("\n" + "=" * 50 + "\n")
 
 
 if __name__ == "__main__":
