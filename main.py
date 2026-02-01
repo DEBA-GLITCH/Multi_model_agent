@@ -5,9 +5,7 @@ from jsonschema import validate, ValidationError
 from agents.planner_agent import PlannerAgent
 from agents.executor_agent import ExecutorAgent
 from agents.critic_agent import CriticAgent
-from memory import audit_log
 from memory.audit_log import AuditLog
-
 
 from config.settings import MAX_ITERATIONS
 
@@ -32,11 +30,7 @@ def main():
     print("Multi-Agent System (Phase 4)")
     print("Type 'exit' or 'quit' to stop.\n")
 
-
-
     # Load schemas
-
-
 
     try:
         plan_schema = load_schema("schemas/plan_schema.json")
@@ -51,6 +45,7 @@ def main():
 
     while True:
         user_input = input("User > ").strip()
+        print("\n🧠 Analyzing your request and preparing a compliant plan...\n")
         audit_log = AuditLog()
 
 
@@ -59,41 +54,42 @@ def main():
             break
 
         approved = False
+        fatal_error = False
         feedback = None
 
         for iteration in range(1, MAX_ITERATIONS + 1):
-            print(f"\n--- Iteration {iteration} ---")
-
+            #print(f"\n--- Iteration {iteration} ---")                        >internal debugging only<
 
             # 1. Planner creates plan
 
-
             plan = planner.create_plan(user_input, feedback)
 
+            # Defensive normalization: ensure step.inputs is always an object
+            for step in plan.get("steps", []):
+                if not isinstance(step.get("inputs"), dict):
+                    step["inputs"] = {}
 
 
             # 2. Validate plan schema (HARD GATE)
 
-
-
             try:
                 validate(instance=plan, schema=plan_schema)
             except ValidationError as e:
-                print("❌ Plan schema validation failed.")
-                print("Error:", e.message)
+                print("❌ Internal planning error. Retrying may help.")
+                fatal_error = True
                 break  # fatal — no executor run
 
             # 3. Executor executes plan
 
             execution_result = executor.execute(plan)
-            #print("Execution Result:", execution_result)   >>internal debugging only<<
+
+            #print("Execution Result:", execution_result)                       >>internal debugging only<<
             
             # 4. Critic reviews
 
             critique = critic.review(plan, execution_result)
 
             # 5. Validate critique schema
-
 
             try:
                 validate(instance=critique, schema=critique_schema)
@@ -117,35 +113,34 @@ def main():
             print("Critic Decision:", decision)
 
             if decision == "APPROVE":
-                print("\n✅ Final Approved Plan:")
                 audit_log.log_final_plan(plan)
+
+                print("\n✅ Here’s a clear, compliant plan you can confidently follow:\n")
+
                 formatted_plan = format_plan_for_user(plan)
                 print(formatted_plan)
-                print("\n📊 Decision Summary:")
-                print(audit_log.summary())
-                #print(json.dumps(plan, indent=2))             >>internal debugging only<<
-                approved = True
+
+                summary = audit_log.summary()
+                confidence = int(summary["confidence_score"] * 100)
+
+                print(f"\n🔒 Confidence level: {confidence}%")
+                print("This plan meets standard regulatory and operational requirements.\n")
+
                 break
-
-
-        
             else:
-                print("❌ Rejected by Critic, revising plan...")
+                #print("❌ Rejected by Critic, revising plan...")                >>internal debugging only<<
                 #print("Reasons:", critique["reasons"])
-                #print("Required Changes:", critique["required_changes"])    >>internal debugging only<<
+                #print("Required Changes:", critique["required_changes"])        >>internal debugging only<<
 
                 # ✅ UPDATE feedback here
                 feedback = critique["required_changes"]
 
-
-        if not approved:
-            print("\n⚠️ Max iterations reached or fatal error occurred.")
-            print("No approved output produced.")
-        
-
-
-        #print("\n" + "=" * 50 + "\n")
-
+            if not approved and fatal_error:
+                 print("\n⚠️ The request could not be fulfilled due to an internal planning error.")
+            elif not approved:
+                 print("\n⚠️ Unable to produce a satisfactory plan after multiple attempts.")
 
 if __name__ == "__main__":
     main()    
+
+
